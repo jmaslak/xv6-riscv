@@ -4,6 +4,13 @@
 #include "kernel/fs.h"
 #include "kernel/fcntl.h"
 
+char * ST_TYPES[] = {
+    "(none)",
+    "DIR   ",
+    "FILE  ",
+    "DEVICE"
+};
+
 char*
 fmtname(char *path)
 {
@@ -45,7 +52,7 @@ ls(char *path)
   switch(st.type){
   case T_DEVICE:
   case T_FILE:
-    printf("%s %d %d %d\n", fmtname(path), st.type, st.ino, (int) st.size);
+    printf("%s %s %d %d\n", fmtname(path), ST_TYPES[st.type], st.ino, (int) st.size);
     break;
 
   case T_DIR:
@@ -65,7 +72,7 @@ ls(char *path)
         printf("ls: cannot stat %s\n", buf);
         continue;
       }
-      printf("%s %d %d %d\n", fmtname(buf), st.type, st.ino, (int) st.size);
+      printf("%s %s %d %d\n", fmtname(buf), ST_TYPES[st.type], st.ino, (int) st.size);
     }
     break;
   }
