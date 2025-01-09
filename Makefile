@@ -128,6 +128,7 @@ UPROGS=\
 	$U/_forktest\
 	$U/_grep\
 	$U/_init\
+	$U/_joelle\
 	$U/_kill\
 	$U/_ln\
 	$U/_ls\
