@@ -98,6 +98,50 @@ vprintf(int fd, const char *fmt, va_list ap)
           s = "(null)";
         for(; *s; s++)
           putc(fd, *s);
+      } else if((c0 >= '0' && c0 <= '9') || c0 == '-') {
+        int count = 0;
+        int j=i;
+        int flag = 0;
+        int sign = 1;
+        if (c0 == '-') {
+          sign = -1;
+          j++;
+        }
+        for (; fmt[j]; j++) {
+          int nc = fmt[j] & 0xff;
+          if (nc >= '0' && nc <= '9') {
+            count = count * 10 + (nc - '0');
+          } else if (nc == 's') {
+            flag = 1;
+            break;
+          }
+        }
+        if (flag) {
+          if ((s = va_arg(ap, char*)) == 0)
+            s = "(null)";
+
+          if (sign > 0) {
+            int len = strlen(s);
+            for (int k=len; k<count; k++) {
+              putc(fd, ' ');
+            }
+          }
+          for(; *s; s++) {
+            putc(fd, *s);
+            count--;
+          }
+          if (sign < 0) {
+            for (int k=0; k<count; k++) {
+              putc(fd, ' ');
+            }
+          }
+
+          i = j;
+        } else {
+          // Unknown % sequence.  Print it to draw attention.
+          putc(fd, '%');
+          putc(fd, c0);
+        }
       } else if(c0 == '%'){
         putc(fd, '%');
       } else {
