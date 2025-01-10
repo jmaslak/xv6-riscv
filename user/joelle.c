@@ -5,6 +5,7 @@
 int
 main(int argc, char *argv[])
 {
-    printf("Hello, World.\n");
+    printf("Hello, World. %20s foo\n", "a");
+    printf("Hello, World. %-20s foo\n", "a");
     exit(0);
 }
