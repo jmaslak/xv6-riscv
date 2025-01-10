@@ -6,8 +6,8 @@
 
 char * ST_TYPES[] = {
     "(none)",
-    "DIR   ",
-    "FILE  ",
+    "DIR",
+    "FILE",
     "DEVICE"
 };
 
@@ -52,7 +52,7 @@ ls(char *path)
   switch(st.type){
   case T_DEVICE:
   case T_FILE:
-    printf("%s %s %d %d\n", fmtname(path), ST_TYPES[st.type], st.ino, (int) st.size);
+    printf("%s %-6s %d %d\n", fmtname(path), ST_TYPES[st.type], st.ino, (int) st.size);
     break;
 
   case T_DIR:
@@ -72,7 +72,7 @@ ls(char *path)
         printf("ls: cannot stat %s\n", buf);
         continue;
       }
-      printf("%s %s %d %d\n", fmtname(buf), ST_TYPES[st.type], st.ino, (int) st.size);
+      printf("%s %-6s %d %d\n", fmtname(buf), ST_TYPES[st.type], st.ino, (int) st.size);
     }
     break;
   }
