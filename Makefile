@@ -135,6 +135,7 @@ UPROGS=\
 	$U/_ln\
 	$U/_ls\
 	$U/_mkdir\
+	$U/_pong\
 	$U/_rm\
 	$U/_sh\
 	$U/_stressfs\

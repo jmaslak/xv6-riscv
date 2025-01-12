@@ -43,3 +43,7 @@ uint64 time(void);
 // umalloc.c
 void* malloc(uint);
 void free(void*);
+
+#define stdin (0)
+#define stdout (1)
+#define stderr (2)
