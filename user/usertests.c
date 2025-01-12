@@ -2586,6 +2586,21 @@ badarg(char *s)
   exit(0);
 }
 
+// make sure time goes forward.
+void
+timetest() {
+  uint64 start = time();
+  sleep(20); // two seconds
+  uint64 end = time();
+
+  if (start >= end) {
+    printf("FAILED -- time did not move forward\n");
+    exit(1);
+  }
+
+  return;
+}
+
 struct test {
   void (*f)(char *);
   char *s;
@@ -2650,6 +2665,7 @@ struct test {
   {sbrklast, "sbrklast"},
   {sbrk8000, "sbrk8000"},
   {badarg, "badarg" },
+  {timetest, "time" },
 
   { 0, 0},
 };

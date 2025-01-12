@@ -22,6 +22,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+uint64 nanotime(void);
 
 // ulib.c
 int stat(const char*, struct stat*);
@@ -37,6 +38,7 @@ void* memset(void*, int, uint);
 int atoi(const char*);
 int memcmp(const void *, const void *, uint);
 void *memcpy(void *, const void *, uint);
+uint64 time(void);
 
 // umalloc.c
 void* malloc(uint);

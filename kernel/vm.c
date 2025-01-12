@@ -46,6 +46,9 @@ kvmmake(void)
   // allocate and map a kernel stack for each process.
   proc_mapstacks(kpgtbl);
   
+  // Goldfish RTC
+  kvmmap(kpgtbl, 0x101000, 0x101000, PGSIZE, PTE_R | PTE_W);
+
   return kpgtbl;
 }
 

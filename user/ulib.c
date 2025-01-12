@@ -145,3 +145,9 @@ memcpy(void *dst, const void *src, uint n)
 {
   return memmove(dst, src, n);
 }
+
+uint64
+time(void)
+{
+    return nanotime() / 1000000000;
+}
