@@ -6,9 +6,7 @@ int
 main(int argc, char *argv[])
 {
     printf("Time: %ld\n", time());
-    printf("Hello, World. %20s foo\n", "a");
-    printf("Hello, World. %-20s foo\n", "a");
-
-    printf("%lu %lu\n", sizeof(long), sizeof(int));
+    printf("sizeof(int) : %lu bytes\n", sizeof(int));
+    printf("sizeof(long): %lu bytes\n", sizeof(long));
     exit(0);
 }
