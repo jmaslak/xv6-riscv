@@ -77,7 +77,7 @@ int             piperead(struct pipe*, uint64, int);
 int             pipewrite(struct pipe*, uint64, int);
 
 // printf.c
-int            printf(char*, ...) __attribute__ ((format (printf, 1, 2)));
+int             printf(char*, ...) __attribute__ ((format (printf, 1, 2)));
 void            panic(char*) __attribute__((noreturn));
 void            printfinit(void);
 
@@ -189,6 +189,9 @@ void            virtio_disk_intr(void);
 void            rtcinit(void);
 uint64          GoldFish__rtc__get__nanotime(void);
 uint64          get_rtc_nanotime(void);
+
+// optimist.c
+
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
