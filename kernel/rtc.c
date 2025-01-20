@@ -1,5 +1,6 @@
 #include "types.h"
 #include "riscv.h"
+#include "memlayout.h"
 #include "defs.h"
 
 // This code was inspired by:
@@ -10,7 +11,7 @@ void rtcinit() {
 }
 
 uint64 GoldFish__rtc__get_nanotime(void) {
-    uint64* epoch_pnt = (uint64*) 0x101000;
+    uint64* epoch_pnt = (uint64*) GOLDFISH_NANOS;
     return *epoch_pnt;
 }
 

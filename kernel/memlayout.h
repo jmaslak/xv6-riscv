@@ -4,10 +4,11 @@
 // based on qemu's hw/riscv/virt.c:
 //
 // 00001000 -- boot ROM, provided by qemu
+// 00101000 -- Goldfish RTC mmap location
 // 02000000 -- CLINT
 // 0C000000 -- PLIC
-// 10000000 -- uart0 
-// 10001000 -- virtio disk 
+// 10000000 -- uart0
+// 10001000 -- virtio disk
 // 80000000 -- boot ROM jumps here in machine mode
 //             -kernel loads the kernel here
 // unused RAM after 80000000.
@@ -57,3 +58,12 @@
 //   TRAPFRAME (p->trapframe, used by the trampoline)
 //   TRAMPOLINE (the same page as in the kernel)
 #define TRAPFRAME (TRAMPOLINE - PGSIZE)
+
+// Goldfish RTC
+// See https://github.com/qemu/qemu/blob/master/hw/riscv/virt.c
+// and https://github.com/qemu/qemu/blob/master/include/hw/rtc/goldfish_rtc.h
+// and https://github.com/qemu/qemu/blob/master/hw/rtc/goldfish_rtc.c
+//
+// On the virt RiskV platform, the RTC is also mmaped to 0x00101000.  The first
+// 64 bits are "tick_offset".
+#define GOLDFISH_NANOS 0x00101000;
