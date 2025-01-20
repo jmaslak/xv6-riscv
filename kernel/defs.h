@@ -191,7 +191,7 @@ uint64          GoldFish__rtc__get__nanotime(void);
 uint64          get_rtc_nanotime(void);
 
 // optimist.c
-
+int             optimist(char *);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
