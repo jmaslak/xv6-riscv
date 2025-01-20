@@ -36,7 +36,7 @@ sys_optimist(void)
   //   We use the XTEA algorithm with a key that partially consists of
   //   the process PID and an input of the RTC nanosecond timer.
   uint key[] = {512, 111, 93, myproc()->pid};
-  uint64 entropy = encipher(16, get_rtc_nanotime(), key);
+  uint64 entropy = encipher(64, get_rtc_nanotime(), key);
 
   if (entropy % OPTIMIST_CHANCE) {
     return copyout(myproc()->pagetable, p, "yes", 4);
