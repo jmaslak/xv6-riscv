@@ -65,6 +65,42 @@ sys_dup(void)
   return fd;
 }
 
+// Duplicate a file descriptor to a specified new location
+// We don't have to worry about locking this chunk of code because we don't
+// have threads.  If we added threads, this could be a problem!
+uint64
+sys_dup2(void)
+{
+  int fd_src;
+  argint(0, &fd_src);
+
+  int fd_dst;
+  argint(1, &fd_dst);
+
+  struct file *f;
+  if(argfd(0, 0, &f) < 0) return -1;   // We use argfd just because it's
+                                       // easy and already error-checks.
+ 
+  // Validate that the new FD is valid too 
+  if(fd_dst < 0) return -1;
+  if(fd_dst >= NOFILE) return -1;
+
+  // Do nothing in this case.
+  if (fd_src == fd_dst) {
+    return fd_dst;
+  }
+
+  struct proc *p = myproc();
+
+  if (p->ofile[fd_dst] != 0) {
+    fileclose(p->ofile[fd_dst]);  // Decrement refcount and (if needed) close
+  }
+  p->ofile[fd_dst] = f;
+  filedup(f);       // Increment refcount
+
+  return fd_dst;
+}
+
 uint64
 sys_read(void)
 {

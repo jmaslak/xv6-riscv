@@ -38,3 +38,4 @@ entry("sleep");
 entry("uptime");
 entry("nanotime");
 entry("optimist");
+entry("dup2");

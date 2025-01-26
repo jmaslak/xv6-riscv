@@ -24,6 +24,7 @@ int sleep(int);
 int uptime(void);
 uint64 nanotime(void);
 int optimist(char*);
+int dup2(int, int);
 
 // ulib.c
 int stat(const char*, struct stat*);
