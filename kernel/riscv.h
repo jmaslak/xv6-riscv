@@ -40,6 +40,32 @@ w_mepc(uint64 x)
   asm volatile("csrw mepc, %0" : : "r" (x));
 }
 
+static inline uint64
+r_mepc()
+{
+  uint64 x;
+  asm volatile("csrr %0, mepc" : "=r" (x));
+  return x;
+}
+
+// machine exception vector, holds the
+// instruction address of machine mode trap handler.
+static inline void
+w_mtvec(uint64 x)
+{
+  asm volatile("csrw mtvec, %0" : : "r" (x));
+}
+
+// machine exception vector, holds the
+// instruction address of machine mode trap handler.
+static inline uint64
+r_mtvec()
+{
+  uint64 x;
+  asm volatile("csrr %0, mtvec" : "=r" (x));
+  return x;
+}
+
 // Supervisor Status Register, sstatus
 
 #define SSTATUS_SPP (1L << 8)  // Previous mode, 1=Supervisor, 0=User
