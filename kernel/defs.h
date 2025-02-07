@@ -65,6 +65,8 @@ void            kfree(void *);
 void            kinit(void);
 void            find_last_memory(void *);
 void            found_last_memory();
+extern volatile unsigned long phystop;
+extern volatile unsigned long eom_marker;
 
 // log.c
 void            initlog(int, struct superblock*);

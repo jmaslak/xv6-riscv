@@ -3,6 +3,7 @@
 #include "memlayout.h"
 #include "riscv.h"
 #include "defs.h"
+#include "spinlock.h"
 
 void main();
 void timerinit();
@@ -12,15 +13,12 @@ void calculate_ram();
 __attribute__ ((aligned (16))) char stack0[4096 * NCPU];
 
 extern char end[];
+extern void machine_eom_vec();
 
 // entry.S jumps here in machine mode on stack0.
 void
 start()
 {
-  // keep each CPU's hartid in its tp register, for cpuid().
-  int id = r_mhartid();
-  w_tp(id);
-
   // Calculate RAM
   calculate_ram();
 
@@ -50,6 +48,10 @@ start()
   // ask for clock interrupts.
   timerinit();
 
+  // keep each CPU's hartid in its tp register, for cpuid().
+  int id = r_mhartid();
+  w_tp(id);
+
   // switch to supervisor mode and jump to main().
   asm volatile("mret");
 }
@@ -76,10 +78,14 @@ timerinit()
 // privilege to supervisor mode.
 void
 calculate_ram() {
+  static struct spinlock lk = { .name = "EOM" };
   volatile static int done = 0;
-  int id = r_tp();
 
-  if (!id) {
+  acquire(&lk);
+
+  // The first hart to get here gets to do the mem check. Others will
+  // see that it has already run.
+  if (!done) {
     // We want to ensure we return from an exception i machine mode.
     unsigned long x = r_mstatus();
     x &= ~MSTATUS_MPP_MASK;
@@ -89,21 +95,16 @@ calculate_ram() {
     // When we get an exception, we assume it's because we accessed
     // invalid memory. So we're going to set that as our trap
     // handler.
-    w_mtvec((uint64)found_last_memory);
+    w_mtvec((uint64)machine_eom_vec);
 
     // We run a routine that updates the phystop variable until an
-    // found_last_memory runs (during an exception).
+    // exception occurs
     find_last_memory(end);
 
     // Reset the trap handler.
     w_mtvec(0);
     done = 1;
-  } else {
-    // We shouldn't need to block the other cores, but lets be safe.
-    // We don't bother using a proper lock because done is going to
-    // consistenlty read zero just fine until we write to it, and we
-    // don't need the write to be atomic (if it takes an extra cycle, so
-    // be it).
-    while (!done) {}
   }
+
+  release(&lk);
 }

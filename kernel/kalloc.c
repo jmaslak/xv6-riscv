@@ -15,7 +15,7 @@ extern char end[]; // first address after kernel.
                    // defined by kernel.ld.
 
 volatile unsigned long phystop = (KERNBASE + 0x8000000000ul);
-volatile int eom_marker = 0;
+volatile unsigned long eom_marker = 0;
 
 struct run {
   struct run *next;
@@ -42,44 +42,9 @@ find_last_memory(void *pa_start)
     *p = '0';                   // We expect this to generate a trap
                                 // when accessing invalid RAM.
 
-    // We can't trust any local variable, because the registers might
-    // have gotten clobbered.
-    //
-    // So we instead check for the marker. If the marker is NOT set,
-    // we are fine to trust our locals again.
-    //
-    // This isn't a problem because if the locals get clobbered,
-    // the marker is set, and we return and who cares about the local
-    // then?
-
-    if (eom_marker) { return; }
-    if (*p != '0') { return; }  // On the off chance a write doesn't
-                                // generate a trap.
-
+    if (eom_marker) { return; } // Did we get the trap?
     phystop = (unsigned long) p + PGSIZE;
   }
-}
-
-// We use this as a trap handler. Now if any traps OTHER than an invalid
-// memory access occur, we could be in trouble and undercount our RAM.
-//
-// We're going to pretend that can't happen.  In real life, we'd
-// probably want to check for proper values.
-//
-// I probably should just have written this in ASM...
-void __attribute__((aligned(4), noreturn, naked))
-found_last_memory()
-{
-    eom_marker = 1;
-    asm volatile("addi sp,sp,-16");
-    asm volatile("sd ra,0(sp)");
-    asm volatile("sd x5,8(sp)");
-    register uint64 mepc asm ("x5") = r_mepc() + 4;
-    w_mepc(mepc);  // Advance to next instruction
-    asm volatile("ld x5,8(sp)");
-    asm volatile("ld ra,0(sp)");
-    asm volatile("addi sp,sp,16");
-    asm volatile("mret");
 }
 
 void
