@@ -78,10 +78,11 @@ timerinit()
 // privilege to supervisor mode.
 void
 calculate_ram() {
-  static struct spinlock lk = { .name = "EOM" };
   volatile static int done = 0;
+  static uint64 lk = 0;
 
-  acquire(&lk);
+  // Lock so only one proc does this test.
+  while(__sync_lock_test_and_set(&lk, 1) != 0);
 
   // The first hart to get here gets to do the mem check. Others will
   // see that it has already run.
@@ -106,5 +107,5 @@ calculate_ram() {
     done = 1;
   }
 
-  release(&lk);
+  __sync_lock_release(&lk);
 }
