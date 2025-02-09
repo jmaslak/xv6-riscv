@@ -78,9 +78,20 @@ start_exec:
 
           safestrcpy(arg, potential+2, MAXPATH+1);
 
+          char * arg1 = 0;
+          if (!iteration_count) {
+            arg1 = kalloc();
+            if (arg1 == 0) {
+              kfree(arg);
+              goto bad;
+            }
+            safestrcpy(arg1, path, MAXPATH+1);
+          }
+
           char ** newargs = kalloc();
           if (newargs == 0) {
             kfree(arg);
+            if (arg1) kfree(arg1);
             goto bad;
           }
 
@@ -90,6 +101,7 @@ start_exec:
             // with zero arg.
             if ((uint64)(newargs + PGSIZE) <= sizeof(char **) + (uint64)(newargs+argc+2)) {
               kfree(arg);
+              if (arg1) kfree(arg1);
               kfree(newargs);
               goto bad;
             }
@@ -98,6 +110,9 @@ start_exec:
                                            // arg
           }
           newargs[argc+1] = 0;
+          if (arg1) {
+            newargs[1] = arg1;
+          }
           if (iteration_count)
             kfree(argv);
           argv = newargs;
@@ -203,7 +218,8 @@ start_exec:
 
   // Clean up the pages we allocated.
   if (iteration_count) {
-    for (i=0; i<iteration_count; i++)
+    printf("%d\n", iteration_count);
+    for (i=0; i<=iteration_count; i++)
       kfree(argv[i]);
     kfree(argv);
   }
@@ -213,7 +229,7 @@ start_exec:
  bad:
   // Clean up pages we allocated
   if (iteration_count) {
-    for (i=0; i<iteration_count; i++)
+    for (i=0; i<=iteration_count; i++)
       kfree(argv[i]);
     kfree(argv);
   }
