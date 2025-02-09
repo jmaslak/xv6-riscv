@@ -41,8 +41,7 @@ exec(char *path, char **argv)
 start_exec:
   // If we're > 4 deep in recursion, we'll bail out, just like Linux.
   if (iteration_count > 4) {
-      kfree(argv);
-      return -1;
+    goto bad;
   }
 
   begin_op();
