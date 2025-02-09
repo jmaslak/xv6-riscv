@@ -39,3 +39,4 @@ entry("uptime");
 entry("nanotime");
 entry("optimist");
 entry("dup2");
+entry("meminfo");

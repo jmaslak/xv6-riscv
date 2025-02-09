@@ -1,4 +1,8 @@
 struct stat;
+struct mem_info {
+    uint64 total_mem;
+    uint64 avail_mem;
+};
 
 // system calls
 int fork(void);
@@ -25,6 +29,7 @@ int uptime(void);
 uint64 nanotime(void);
 int optimist(char*);
 int dup2(int, int);
+int meminfo(struct mem_info*);
 
 // ulib.c
 int stat(const char*, struct stat*);

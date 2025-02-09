@@ -2,10 +2,18 @@
 #include "kernel/syscall.h"
 #include "user/user.h"
 
+#define MB(x) (x/(1024lu * 1024lu))
+
 int
 main(int argc, char *argv[])
 {
+    struct mem_info mem_info;
+    meminfo(&mem_info);
+
     printf("Time: %ld\n", time());
+    printf("Total memory: %lu bytes (%lu MB)\n", mem_info.total_mem, MB(mem_info.total_mem));
+    printf("Free memory : %lu bytes (%lu MB)\n", mem_info.avail_mem, MB(mem_info.avail_mem));
+
     printf("sizeof(int) : %lu bytes\n", sizeof(int));
     printf("sizeof(long): %lu bytes\n", sizeof(long));
 

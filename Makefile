@@ -130,6 +130,7 @@ UPROGS=\
 	$U/_echo\
 	$U/_exec\
 	$U/_forktest\
+	$U/_free\
 	$U/_grep\
 	$U/_init\
 	$U/_joelle\

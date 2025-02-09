@@ -8,6 +8,8 @@
 #include "spinlock.h"
 #include "riscv.h"
 #include "defs.h"
+#include "proc.h"
+#include "kalloc.h"
 
 void freerange(void *pa_start, void *pa_end);
 
@@ -96,4 +98,36 @@ kalloc(void)
   if(r)
     memset((char*)r, 5, PGSIZE); // fill with junk
   return (void*)r;
+}
+
+void
+meminfo(struct mem_info * mem_info) {
+    uint64 pages = 0;
+    struct run * current = kmem.freelist;
+
+    acquire(&kmem.lock);
+    while (current != 0) {
+        pages++;
+        current = current->next;
+    }
+    release(&kmem.lock);
+
+    mem_info->total_mem = phystop-KERNBASE;
+    mem_info->avail_mem = pages * PGSIZE;
+}
+
+uint64
+sys_meminfo() {
+    uint64 user_addr;
+    struct proc *p = myproc();
+    struct mem_info mem_info;
+
+    argaddr(0, &user_addr);
+
+    meminfo(&mem_info);
+
+    if(copyout(p->pagetable, user_addr, (char *) &mem_info, sizeof(mem_info)) < 0)
+        return -1;
+
+    return 0;
 }

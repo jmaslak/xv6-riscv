@@ -1,3 +1,5 @@
+#include "kalloc.h"
+
 struct buf;
 struct context;
 struct file;
@@ -64,9 +66,9 @@ void*           kalloc(void);
 void            kfree(void *);
 void            kinit(void);
 void            find_last_memory(void *);
-void            found_last_memory();
 extern volatile unsigned long phystop;
 extern volatile unsigned long eom_marker;
+void            meminfo(struct mem_info *);
 
 // log.c
 void            initlog(int, struct superblock*);

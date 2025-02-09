@@ -104,6 +104,7 @@ extern uint64 sys_close(void);
 extern uint64 sys_nanotime(void);
 extern uint64 sys_optimist(void);
 extern uint64 sys_dup2(void);
+extern uint64 sys_meminfo(void);
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -132,6 +133,7 @@ static uint64 (*syscalls[])(void) = {
 [SYS_nanotime] sys_nanotime,
 [SYS_optimist] sys_optimist,
 [SYS_dup2]    sys_dup2,
+[SYS_meminfo] sys_meminfo,
 };
 
 void
