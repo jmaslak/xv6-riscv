@@ -218,7 +218,6 @@ start_exec:
 
   // Clean up the pages we allocated.
   if (iteration_count) {
-    printf("%d\n", iteration_count);
     for (i=0; i<=iteration_count; i++)
       kfree(argv[i]);
     kfree(argv);
