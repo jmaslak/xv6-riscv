@@ -30,14 +30,87 @@ exec(char *path, char **argv)
   struct proghdr ph;
   pagetable_t pagetable = 0, oldpagetable;
   struct proc *p = myproc();
+  char potential[MAXPATH+3];
+  int iteration_count = 0;
+  int len;
+
+  // We iterate rather than recursively call exec, because we're
+  // allocating a relatively big local variable (potential) and we'd be
+  // limited on stack depth if we recursively called exec too many
+  // times. We use this label as the start point of our iteration.
+start_exec:
+  // If we're > 4 deep in recursion, we'll bail out, just like Linux.
+  if (iteration_count > 4) {
+      kfree(argv);
+      return -1;
+  }
 
   begin_op();
-
   if((ip = namei(path)) == 0){
     end_op();
-    return -1;
+    goto bad;
   }
   ilock(ip);
+
+  // Check for shebang. To save on reads (since we're reading every
+  // non-shebang file twice already), we grab enough of the file to get
+  // any potential filename.
+  if((len = readi(ip, 0, (uint64)&potential, 0, sizeof(potential))) >= 3) {
+    if ((potential[0] == '#') && (potential[1] == '!')) {
+      iunlockput(ip);  // We are done with the old inode at this point.
+                       // This does create a potential race/security condition,
+                       // but this race condition exists in Linux too!
+                       // I.E. if someone replaces the shell script
+                       // in-between the exec() call start and the
+                       // interpreter opening argv[1], the interpreter
+                       // may run something other than would normally be
+                       // expected.
+      end_op();
+      ip = 0;
+      potential[MAXPATH+2] = '\0';
+
+      for (i=2; i<=len; i++) {
+        if ((potential[i] == '\n') || potential[i] == '\0') {
+          potential[i] = '\0';
+          char * arg = kalloc();
+          if (arg == 0)
+            goto bad;
+
+          safestrcpy(arg, potential+2, MAXPATH+1);
+
+          char ** newargs = kalloc();
+          if (newargs == 0) {
+            kfree(arg);
+            goto bad;
+          }
+
+          newargs[0] = arg;
+          for(argc = 0; argv[argc]; argc++) {
+            // number of arguments is too large to fit on a page, along
+            // with zero arg.
+            if ((uint64)(newargs + PGSIZE) <= sizeof(char **) + (uint64)(newargs+argc+2)) {
+              kfree(arg);
+              kfree(newargs);
+              goto bad;
+            }
+            newargs[argc+1] = argv[argc];  // We create a new argv with
+                                           // interpreter as the first
+                                           // arg
+          }
+          newargs[argc+1] = 0;
+          if (iteration_count)
+            kfree(argv);
+          argv = newargs;
+          argv[0] = arg;
+          path = arg;
+          iteration_count++;
+          goto start_exec;
+        }
+      }
+      // The filename was too long, so error out.
+      goto bad;
+    }
+  }
 
   // Check ELF header
   if(readi(ip, 0, (uint64)&elf, 0, sizeof(elf)) != sizeof(elf))
@@ -128,9 +201,24 @@ exec(char *path, char **argv)
   p->trapframe->sp = sp; // initial stack pointer
   proc_freepagetable(oldpagetable, oldsz);
 
+  // Clean up the pages we allocated.
+  if (iteration_count) {
+    for (i=0; i<iteration_count; i++)
+      kfree(argv[i]);
+    kfree(argv);
+  }
+
   return argc; // this ends up in a0, the first argument to main(argc, argv)
 
  bad:
+  // Clean up pages we allocated
+  if (iteration_count) {
+    for (i=0; i<iteration_count; i++)
+      kfree(argv[i]);
+    kfree(argv);
+  }
+
+  // Other cleanup
   if(pagetable)
     proc_freepagetable(pagetable, sz);
   if(ip){

@@ -18,5 +18,9 @@ main(int argc, char *argv[])
         exit(1);
     }
 
+    for (int i=0; i<argc; i++) {
+        printf("Arg %d: %s\n", i, argv[i]);
+    }
+
     exit(0);
 }

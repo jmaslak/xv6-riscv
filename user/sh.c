@@ -132,9 +132,10 @@ runcmd(struct cmd *cmd)
 }
 
 int
-getcmd(char *buf, int nbuf)
+getcmd(char *buf, int nbuf, int prompt)
 {
-  write(2, "$ ", 2);
+  if (prompt)
+    write(1, "$ ", 2);
   memset(buf, 0, nbuf);
   gets(buf, nbuf);
   if(buf[0] == 0) // EOF
@@ -143,10 +144,11 @@ getcmd(char *buf, int nbuf)
 }
 
 int
-main(void)
+main(int argc, char ** argv)
 {
   static char buf[300];
   int fd;
+  int prompt = 1;
 
   // Ensure that three file descriptors are open.
   while((fd = open("console", O_RDWR)) >= 0){
@@ -156,8 +158,16 @@ main(void)
     }
   }
 
+  if (argc > 1) {
+    close(0);
+    if ((fd = open(argv[1], O_RDONLY)) != 0) {
+      fprintf(2, "cannot open %s\n", argv[1]);
+    }
+    prompt = 0;
+  }
+
   // Read and run input commands.
-  while(getcmd(buf, sizeof(buf)) >= 0){
+  while(getcmd(buf, sizeof(buf), prompt) >= 0){
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
       // Chdir must be called by the parent, not the child.
       buf[strlen(buf)-1] = 0;  // chop \n
@@ -165,6 +175,9 @@ main(void)
         fprintf(2, "cannot cd %s\n", buf+3);
       continue;
     }
+    if(buf[0] == '#')
+      // Handle comments (at least ones that start at column 0!
+      continue;
     if(fork1() == 0)
       runcmd(parsecmd(buf));
     wait(0);
