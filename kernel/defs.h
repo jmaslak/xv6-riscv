@@ -69,6 +69,8 @@ void            find_last_memory(void *);
 extern volatile unsigned long phystop;
 extern volatile unsigned long eom_marker;
 void            meminfo(struct mem_info *);
+void            kheap_init(void);
+void            kheap_grow(void);
 
 // log.c
 void            initlog(int, struct superblock*);

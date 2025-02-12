@@ -2,6 +2,7 @@ struct stat;
 struct mem_info {
     uint64 total_mem;
     uint64 avail_mem;
+    uint64 kheap_mem;
 };
 
 // system calls

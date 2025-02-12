@@ -16,8 +16,13 @@ void freerange(void *pa_start, void *pa_end);
 extern char end[]; // first address after kernel.
                    // defined by kernel.ld.
 
+extern pagetable_t kernel_pagetable;
+
 volatile unsigned long phystop = (KERNBASE + 0x8000000000ul);
 volatile unsigned long eom_marker = 0;
+void * kheap_start = 0;
+void * kheap_next = 0;
+struct spinlock kheap_lock;
 
 struct run {
   struct run *next;
@@ -114,6 +119,7 @@ meminfo(struct mem_info * mem_info) {
 
     mem_info->total_mem = phystop-KERNBASE;
     mem_info->avail_mem = pages * PGSIZE;
+    mem_info->kheap_mem = kheap_next - kheap_start;
 }
 
 uint64
@@ -130,4 +136,29 @@ sys_meminfo() {
         return -1;
 
     return 0;
+}
+
+void kheap_init() {
+    initlock(&kheap_lock, "kheap");
+    kheap_start = (void *) phystop;
+    kheap_next = (void *) phystop;
+    kheap_grow();
+    printf("kheap initialized\n");
+}
+
+// Grow the heap by one page (4096 bytes)
+void kheap_grow() {
+    void * next_phy;
+
+    acquire(&kheap_lock);
+
+    if ((next_phy = (void *) kalloc()) == 0)
+        panic("kheap_grow: out of kernel heap space");
+
+    kvmmap(kernel_pagetable, (uint64) kheap_next, (uint64) next_phy, PGSIZE, PTE_R | PTE_W);
+    kheap_next += PGSIZE;
+
+    sfence_vma();
+
+    release(&kheap_lock);
 }

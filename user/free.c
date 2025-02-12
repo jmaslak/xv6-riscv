@@ -30,23 +30,27 @@ int main(int argc, char *argv[]) {
     uint64 total = mem_info.total_mem;
     uint64 free  = mem_info.avail_mem;
     uint64 used  = total - free;
+    uint64 kheap = mem_info.kheap_mem;
 
     if (opts.mb) {
         total = MB(total);
         free  = MB(free);
         used  = MB(used);
+        kheap = MB(kheap);
     } else {
         total = KB(total);
         free  = KB(free);
         used  = KB(used);
+        kheap = KB(kheap);
     }
 
-    printf("               total        used        free\n");
+    printf("               total        used        free       kheap\n");
 
     printf("        ");
     print_uint64(total, 12);
     print_uint64(used, 12);
     print_uint64(free, 12);
+    print_uint64(kheap, 12);
     printf("\n");
 
     exit(0);

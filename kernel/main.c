@@ -20,6 +20,7 @@ main()
     kinit();         // physical page allocator
     kvminit();       // create kernel page table
     kvminithart();   // turn on paging
+    kheap_init();    // initialize heap
     rtcinit();       // initialize RTC
     procinit();      // process table
     trapinit();      // trap vectors
