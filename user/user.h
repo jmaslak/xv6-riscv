@@ -31,6 +31,7 @@ uint64 nanotime(void);
 int optimist(char*);
 int dup2(int, int);
 int meminfo(struct mem_info*);
+int shutdown(int);
 
 // ulib.c
 int stat(const char*, struct stat*);

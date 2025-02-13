@@ -24,3 +24,4 @@
 #define SYS_optimist 23
 #define SYS_dup2   24
 #define SYS_meminfo 25
+#define SYS_shutdown 26

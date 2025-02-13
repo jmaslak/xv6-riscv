@@ -199,6 +199,12 @@ void            rtcinit(void);
 uint64          GoldFish__rtc__get__nanotime(void);
 uint64          get_rtc_nanotime(void);
 
+// syscon.c
+extern uint16   syscon_shutdown;
+extern uint16   syscon_reboot;
+extern uint16*  syscon;
+void            syscon_init(void);
+
 // optimist.c
 int             optimist(char *);
 

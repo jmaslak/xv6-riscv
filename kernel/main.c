@@ -24,6 +24,7 @@ main()
     kvminithart();   // turn on paging
     kheap_init();    // initialize heap
     rtcinit();       // initialize RTC
+    syscon_init();   // initialize qemu-virt syscon driver
     procinit();      // process table
     trapinit();      // trap vectors
     trapinithart();  // install kernel trap vector

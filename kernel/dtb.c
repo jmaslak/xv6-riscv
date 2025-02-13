@@ -111,7 +111,14 @@ void walk_dtb() {
                 } else if (strncmp(min_string + nm, "phandle", len) == 0) {
                     print_hex32(" = ", swap_u32(*tag), 0);
                 } else if (strncmp(min_string + nm, "value", len) == 0) {
-                    print_hex32(" = ", swap_u32(*tag), 0);
+                    uint32 val = swap_u32(*tag);
+                    print_hex32(" = ", val, 0);
+
+                    if ((strlen(s) == 8) && (!strncmp("poweroff", s, 8)))
+                        syscon_shutdown = val;
+                    else if ((strlen(s) == 6) && (!strncmp("reboot", s, 6)))
+                        syscon_reboot = val;
+
                 } else if (strncmp(min_string + nm, "offset", len) == 0) {
                     print_hex32(" = ", swap_u32(*tag), 0);
                 } else if (strncmp(min_string + nm, "regmap", len) == 0) {
@@ -134,6 +141,10 @@ void walk_dtb() {
                         uint64 offset = swap_u64(*(1+(uint64*) tag));
                         print_hex64(" = ", start, 0);
                         print_hex64(" ", offset, 0);
+
+                        if ((strlen(s) > 5) && (!strncmp("test@", s, 5))) {
+                            syscon = (uint16 *) start;
+                        }
 
                         if ((strlen(s) > 7) && (!strncmp("memory@", s, 7))) {
                             if (start == KERNBASE) {
