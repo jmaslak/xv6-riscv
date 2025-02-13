@@ -65,7 +65,6 @@ void            ramdiskrw(struct buf*);
 void*           kalloc(void);
 void            kfree(void *);
 void            kinit(void);
-void            find_last_memory(void *);
 extern volatile unsigned long phystop;
 extern volatile unsigned long eom_marker;
 void            meminfo(struct mem_info *);
@@ -87,6 +86,8 @@ int             pipewrite(struct pipe*, uint64, int);
 // printf.c
 int             printf(char*, ...) __attribute__ ((format (printf, 1, 2)));
 void            panic(char*) __attribute__((noreturn));
+void            print_hex32(char*, uint32, int);
+void            print_hex64(char*, uint64, int);
 void            printfinit(void);
 
 // proc.c
@@ -200,6 +201,9 @@ uint64          get_rtc_nanotime(void);
 
 // optimist.c
 int             optimist(char *);
+
+// dtb.c
+void            walk_dtb(void);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

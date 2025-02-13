@@ -160,6 +160,29 @@ printf(char *fmt, ...)
 }
 
 void
+print_hex32(char * prefix, uint32 in, int newline) {
+    printf("%s", prefix);
+    for (int i=7; i>=0; i--) {
+        uint64 j = (in >> (i * 4)) & 0xful;
+        printf("%x", (unsigned int) j);
+    }
+    if (newline) {
+        printf(" (%u)", in);
+        printf("\n");
+    }
+}
+
+void
+print_hex64(char * prefix, uint64 in, int newline) {
+    printf("%s", prefix);
+    for (int i=15; i>=0; i--) {
+        uint64 j = (in >> (i * 4)) & 0xful;
+        printf("%x", (unsigned int) j);
+    }
+    if (newline) printf("\n");
+}
+
+void
 panic(char *s)
 {
   pr.locking = 0;

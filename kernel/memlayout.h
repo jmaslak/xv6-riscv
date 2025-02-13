@@ -65,4 +65,9 @@
 //
 // On the virt RiskV platform, the RTC is also mmaped to 0x00101000.  The first
 // 64 bits are "tick_offset".
-#define GOLDFISH_NANOS 0x00101000;
+#define GOLDFISH_NANOS 0x00101000
+
+// DTB location
+//
+// On QEMU riscv-virt platform, the DTB address is located here.
+#define DTB_PTR 0x1020l

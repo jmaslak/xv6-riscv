@@ -19,9 +19,6 @@ extern void machine_eom_vec();
 void
 start()
 {
-  // Calculate RAM
-  calculate_ram();
-
   // set M Previous Privilege mode to Supervisor, for mret.
   unsigned long x = r_mstatus();
   x &= ~MSTATUS_MPP_MASK;
@@ -71,41 +68,4 @@ timerinit()
   
   // ask for the very first timer interrupt.
   w_stimecmp(r_time() + 1000000);
-}
-
-// Calculate the amount of RAM
-// Must be run when we're in machine mode and before we set mret
-// privilege to supervisor mode.
-void
-calculate_ram() {
-  volatile static int done = 0;
-  static uint64 lk = 0;
-
-  // Lock so only one proc does this test.
-  while(__sync_lock_test_and_set(&lk, 1) != 0);
-
-  // The first hart to get here gets to do the mem check. Others will
-  // see that it has already run.
-  if (!done) {
-    // We want to ensure we return from an exception i machine mode.
-    unsigned long x = r_mstatus();
-    x &= ~MSTATUS_MPP_MASK;
-    x |= MSTATUS_MPP_M;
-    w_mstatus(x);
-
-    // When we get an exception, we assume it's because we accessed
-    // invalid memory. So we're going to set that as our trap
-    // handler.
-    w_mtvec((uint64)machine_eom_vec);
-
-    // We run a routine that updates the phystop variable until an
-    // exception occurs
-    find_last_memory(end);
-
-    // Reset the trap handler.
-    w_mtvec(0);
-    done = 1;
-  }
-
-  __sync_lock_release(&lk);
 }

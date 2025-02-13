@@ -40,20 +40,6 @@ kinit()
   freerange(end, (void*)phystop);
 }
 
-// Finds memory end point
-void
-find_last_memory(void *pa_start)
-{
-  volatile char *p = (char*)PGROUNDUP((uint64)pa_start);
-  for(; p + PGSIZE <= (char*) 0x10000000000ull; p += PGSIZE) {
-    *p = '0';                   // We expect this to generate a trap
-                                // when accessing invalid RAM.
-
-    if (eom_marker) { return; } // Did we get the trap?
-    phystop = (unsigned long) p + PGSIZE;
-  }
-}
-
 void
 freerange(void *pa_start, void *pa_end)
 {
