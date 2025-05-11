@@ -22,7 +22,6 @@ main()
     printf("\n");
     walk_dtb();
     printf("memory: %lu MB\n", (phystop-KERNBASE) / (1024*1024));
-    printf("%u hart(s) detected\n", cpu_count);
     kinit();         // physical page allocator
     kvminit();       // create kernel page table
     kvminithart();   // turn on paging
@@ -39,14 +38,15 @@ main()
     fileinit();      // file table
     virtio_disk_init(); // emulated hard disk
     __sync_synchronize();
-    printf("starting other harts, if any\n");
+    printf("%u hart%s detected\n", cpu_count, cpu_count == 1 ? "" : "s");
+    if (cpu_count > 1) printf("starting other hart%s\n", cpu_count > 2 ? "s" : "");
     started = 1;
     cpus[0].started = 1;
 
-    int running = 0;
+    int running = 1;
     while (running < cpu_count) {
-      running = 0;
-      for (int i=0; i<cpu_count; i++) {
+      running = 1;
+      for (int i=1; i<cpu_count; i++) {
         if (cpus[i].started) running++;
       }
     }

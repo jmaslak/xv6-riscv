@@ -1,5 +1,3 @@
-CPUS := 3
-
 K=kernel
 U=user
 
