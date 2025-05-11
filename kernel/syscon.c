@@ -12,7 +12,7 @@ extern pagetable_t kernel_pagetable;
 void syscon_init() {
     printf("syscon: ");
     if (syscon) {
-        print_hex64("", (uint64) syscon, 0);
+        print_hex64("0x", (uint64) syscon, 0);
         kvmmap(kernel_pagetable, (uint64) syscon, (uint64) syscon, PGSIZE, PTE_R | PTE_W);
     }
 
