@@ -11,6 +11,8 @@
 #include "proc.h"
 #include "kalloc.h"
 
+#define KM_MAGIC ((struct malloc_struct *) 0x6677aadeul)
+
 void freerange(void *pa_start, void *pa_end);
 
 extern char end[]; // first address after kernel.
@@ -18,11 +20,40 @@ extern char end[]; // first address after kernel.
 
 extern pagetable_t kernel_pagetable;
 
+struct malloc_struct {
+  unsigned long size;
+  struct malloc_struct * next;
+  void * data;
+};
+
+// We "bucket" malloc into various sizes, based on the requested space.
+#define malloc_size(x) x>2048 ? 4096 : \
+                       x>1024 ? 2048 : \
+                       x> 512 ? 1024 : \
+                       x> 256 ?  512 : \
+                       x> 128 ?  256 : \
+                       x>  64 ?  128 : \
+                       x>  32 ?   64 : \
+                                  32
+
+#define malloc_index(x) x>2048 ? 7 : \
+                        x>1024 ? 6 : \
+                        x> 512 ? 5 : \
+                        x> 256 ? 4 : \
+                        x> 128 ? 3 : \
+                        x>  64 ? 2 : \
+                        x>  32 ? 1 : \
+                                 0
+
+#define MAX_MALLOC_INDEX 8
+
 volatile unsigned long phystop = (KERNBASE + 0x8000000000ul);
 volatile unsigned long eom_marker = 0;
 void * kheap_start = 0;
 void * kheap_next = 0;
+struct malloc_struct * kmalloc_next[MAX_MALLOC_INDEX];  // Next free space which can be allocated
 struct spinlock kheap_lock;
+struct spinlock kmalloc_lock;
 
 struct run {
   struct run *next;
@@ -126,9 +157,11 @@ sys_meminfo() {
 
 void kheap_init() {
     initlock(&kheap_lock, "kheap");
+    initlock(&kmalloc_lock, "kmalloc");
     kheap_start = (void *) phystop;
     kheap_next = (void *) phystop;
     kheap_grow();
+    for (int i=0; i<8; i++) kmalloc_next[i] = 0ul;
     printf("kheap initialized\n");
 }
 
@@ -147,4 +180,69 @@ void kheap_grow() {
     sfence_vma();
 
     release(&kheap_lock);
+}
+
+void * kmalloc(unsigned long size) {
+  // Enough for a 8 byte size and an 8 byte pointer, aligned at a 16 byte
+  // boundary.
+  if (size > MAX_KMALLOC) panic("kmalloc: attempted to allocate too much space");
+  if (size == 0) panic("kmalloc: attempted to allocate too little space");
+
+  size = malloc_size(size + 16);
+  int index = malloc_index(size);
+
+  acquire(&kmalloc_lock);
+  struct malloc_struct ** current = &kmalloc_next[index];
+
+  while (1) {
+    if (!*current) {
+      struct malloc_struct * newstruct = kalloc();
+      if (!newstruct) {
+        release(&kmalloc_lock);
+        return 0;
+      }
+      newstruct->size = PGSIZE;
+      newstruct->next = 0;
+
+      *current = newstruct;
+    }
+
+    if ((*current)->size == size) {
+      // Exact size match! (or close enough)
+      struct malloc_struct * ptr = *current;
+      *current = ptr->next;
+      ptr->next = KM_MAGIC;
+      release(&kmalloc_lock);
+      return &(ptr->data);
+    }
+
+    if ((*current)->size > size) {
+      // Split it!
+      struct malloc_struct * ptr = (*current);
+      *current = ((void *) ptr) + size;
+      (*current)->size = ptr->size - size;
+      (*current)->next = ptr->next;
+      ptr->size = size;
+      ptr->next = KM_MAGIC;
+      release(&kmalloc_lock);
+      return &(ptr->data);
+    }
+
+    current = &((*current)->next);
+  }
+}
+
+void kmfree(void * ptr) {
+  if (((unsigned long) ptr) % 8) panic("kmfree: attempt to free wrongly aligned pointer");
+  if (((unsigned long) ptr) <= 16) panic("kmfree: attempt to free wrongly aligned pointer");
+
+  struct malloc_struct * current = ptr - 16;
+  if (current->next != KM_MAGIC) panic("kmfree: bad magic");
+
+  acquire(&kmalloc_lock);
+  int index = malloc_index(current->size);
+
+  current->next = kmalloc_next[index];
+  kmalloc_next[index] = current;
+  release(&kmalloc_lock);
 }

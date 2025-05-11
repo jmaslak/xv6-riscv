@@ -70,6 +70,8 @@ extern volatile unsigned long eom_marker;
 void            meminfo(struct mem_info *);
 void            kheap_init(void);
 void            kheap_grow(void);
+void*           kmalloc(unsigned long size);
+void            kmfree(void * ptr);
 
 // log.c
 void            initlog(int, struct superblock*);

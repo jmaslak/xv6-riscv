@@ -71,7 +71,8 @@ start_exec:
       for (i=2; i<=len; i++) {
         if ((potential[i] == '\n') || potential[i] == '\0') {
           potential[i] = '\0';
-          char * arg = kalloc();
+          char * arg = kmalloc(strlen(potential)-1);  // Argument length minus 2 for shebang and
+                                                      // plus 1 for NUL
           if (arg == 0)
             goto bad;
 
@@ -79,18 +80,26 @@ start_exec:
 
           char * arg1 = 0;
           if (!iteration_count) {
-            arg1 = kalloc();
+            arg1 = kmalloc(strlen(path) + 1);
             if (arg1 == 0) {
-              kfree(arg);
+              kmfree(arg);
               goto bad;
             }
             safestrcpy(arg1, path, MAXPATH+1);
           }
 
-          char ** newargs = kalloc();
+          // Make sure this fits on a malloced page.
+          int maxargs = 0; for(argc = 0; argv[argc]; argc++) maxargs++;
+          if (2 + maxargs * sizeof(char**) > MAX_KMALLOC) {  // Terminating null and new arg
+              kmfree(arg);
+              if (arg1) kmfree(arg1);
+              goto bad;
+          }
+
+          char ** newargs = kmalloc(sizeof(char**) * (argc+2));
           if (newargs == 0) {
-            kfree(arg);
-            if (arg1) kfree(arg1);
+            kmfree(arg);
+            if (arg1) kmfree(arg1);
             goto bad;
           }
 
@@ -98,10 +107,10 @@ start_exec:
           for(argc = 0; argv[argc]; argc++) {
             // number of arguments is too large to fit on a page, along
             // with zero arg.
-            if ((uint64)(newargs + PGSIZE) <= sizeof(char **) + (uint64)(newargs+argc+2)) {
-              kfree(arg);
-              if (arg1) kfree(arg1);
-              kfree(newargs);
+            if ((uint64)(newargs + MAX_KMALLOC) <= sizeof(char **) + (uint64)(newargs+argc+2)) {
+              kmfree(arg);
+              if (arg1) kmfree(arg1);
+              kmfree(newargs);
               goto bad;
             }
             newargs[argc+1] = argv[argc];  // We create a new argv with
@@ -113,7 +122,7 @@ start_exec:
             newargs[1] = arg1;
           }
           if (iteration_count)
-            kfree(argv);
+            kmfree(argv);
           argv = newargs;
           argv[0] = arg;
           path = arg;
@@ -218,8 +227,8 @@ start_exec:
   // Clean up the pages we allocated.
   if (iteration_count) {
     for (i=0; i<=iteration_count; i++)
-      kfree(argv[i]);
-    kfree(argv);
+      kmfree(argv[i]);
+    kmfree(argv);
   }
 
   return argc; // this ends up in a0, the first argument to main(argc, argv)
@@ -228,8 +237,8 @@ start_exec:
   // Clean up pages we allocated
   if (iteration_count) {
     for (i=0; i<=iteration_count; i++)
-      kfree(argv[i]);
-    kfree(argv);
+      kmfree(argv[i]);
+    kmfree(argv);
   }
 
   // Other cleanup
