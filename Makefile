@@ -1,3 +1,5 @@
+CPUS := 16
+
 K=kernel
 U=user
 

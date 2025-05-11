@@ -22,6 +22,8 @@ struct dtb_header {
     uint32 size_dt_struct;
 };
 
+unsigned char cpu_count = 0;
+
 void gender_dtb_header(struct dtb_header *);
 
 inline uint32 * advance_past_value(uint32 * tag, uint32 len) {
@@ -126,6 +128,7 @@ void walk_dtb() {
                 } else if (strncmp(min_string + nm, "interrupts", len) == 0) {
                     print_hex32(" = ", swap_u32(*tag), 0);
                 } else if (strncmp(min_string + nm, "cpu", len) == 0) {
+                    cpu_count++;
                     print_hex32(" = ", swap_u32(*tag), 0);
                 } else if (strncmp(min_string + nm, "interrupt_parent", len) == 0) {
                     print_hex32(" = ", swap_u32(*tag), 0);

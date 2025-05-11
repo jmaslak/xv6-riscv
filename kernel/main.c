@@ -19,6 +19,7 @@ main()
     printf("\n");
     walk_dtb();
     printf("memory: %lu MB\n", (phystop-KERNBASE) / (1024*1024));
+    printf("%u CPU(s) detected\n", cpu_count);
     kinit();         // physical page allocator
     kvminit();       // create kernel page table
     kvminithart();   // turn on paging

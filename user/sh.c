@@ -135,7 +135,7 @@ int
 getcmd(char *buf, int nbuf, int prompt)
 {
   if (prompt)
-    write(1, "$ ", 2);
+    write(1, ">> ", 3);
   memset(buf, 0, nbuf);
   gets(buf, nbuf);
   if(buf[0] == 0) // EOF

@@ -210,6 +210,7 @@ int             optimist(char *);
 
 // dtb.c
 void            walk_dtb(void);
+extern unsigned char cpu_count;
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
