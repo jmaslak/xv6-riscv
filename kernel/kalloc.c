@@ -239,8 +239,12 @@ void kmfree(void * ptr) {
   struct malloc_struct * current = ptr - 16;
   if (current->next != KM_MAGIC) panic("kmfree: bad magic");
 
+  int sz = current->size;
+  memset((void *)current, 0, malloc_index(sz));
+  current->size = sz;
+
   acquire(&kmalloc_lock);
-  int index = malloc_index(current->size);
+  int index = malloc_index(sz);
 
   current->next = kmalloc_next[index];
   kmalloc_next[index] = current;
