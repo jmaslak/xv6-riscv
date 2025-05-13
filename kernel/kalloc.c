@@ -51,6 +51,7 @@ volatile unsigned long phystop = (KERNBASE + 0x8000000000ul);
 volatile unsigned long eom_marker = 0;
 void * kheap_start = 0;
 void * kheap_next = 0;
+void * kheap_last_used = 0;
 struct malloc_struct * kmalloc_next[MAX_MALLOC_INDEX];  // Next free space which can be allocated
 struct spinlock kheap_lock;
 struct spinlock kmalloc_lock;
@@ -160,7 +161,7 @@ void kheap_init() {
     initlock(&kmalloc_lock, "kmalloc");
     kheap_start = (void *) phystop;
     kheap_next = (void *) phystop;
-    kheap_grow();
+    kheap_last_used = kheap_start - 1;
     for (int i=0; i<8; i++) kmalloc_next[i] = 0ul;
     printf("kheap initialized\n");
 }
@@ -196,11 +197,11 @@ void * kmalloc(unsigned long size) {
 
   while (1) {
     if (!*current) {
-      struct malloc_struct * newstruct = kalloc();
-      if (!newstruct) {
-        release(&kmalloc_lock);
-        return 0;
+      while (kheap_next - kheap_last_used < size) {
+          kheap_grow();
       }
+      struct malloc_struct * newstruct = kheap_last_used + 1;
+      kheap_last_used += PGSIZE;
       newstruct->size = PGSIZE;
       newstruct->next = 0;
 
