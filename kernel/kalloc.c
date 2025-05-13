@@ -183,7 +183,7 @@ void kheap_init() {
     kheap_start = (void *) phystop;
     kheap_next = (void *) phystop;
     kheap_last_used = kheap_start - 1;
-    for (int i=0; i<MALLOC_MAX_INDEX+1; i++) kmalloc_next[i] = 0ul;
+    for (int i=0; i<=MALLOC_MAX_INDEX; i++) kmalloc_next[i] = 0ul;
     printf("kheap initialized\n");
 }
 
