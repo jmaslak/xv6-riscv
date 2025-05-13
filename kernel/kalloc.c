@@ -26,33 +26,54 @@ struct malloc_struct {
   void * data;
 };
 
+// 1 MB is the max allocation supported
+#define MALLOC_MAX 1048576
+
 // We "bucket" malloc into various sizes, based on the requested space.
-#define malloc_size(x) x>2048 ? 4096 : \
-                       x>1024 ? 2048 : \
-                       x> 512 ? 1024 : \
-                       x> 256 ?  512 : \
-                       x> 128 ?  256 : \
-                       x>  64 ?  128 : \
-                       x>  32 ?   64 : \
-                                  32
+#define malloc_size(x) x>524288 ? 1048576 : \
+                       x>262144 ?  524288 : \
+                       x>131072 ?  262144 : \
+                       x> 65536 ?  131072 : \
+                       x> 32768 ?   65536 : \
+                       x> 16384 ?   32786 : \
+                       x>  8192 ?   16384 : \
+                       x>  4096 ?    8192 : \
+                       x>  2048 ?    4096 : \
+                       x>  1024 ?    2048 : \
+                       x>   512 ?    1024 : \
+                       x>   256 ?     512 : \
+                       x>   128 ?     256 : \
+                       x>    64 ?     128 : \
+                       x>    32 ?      64 : \
+                       x>    16 ?      32 : \
+                                       16
 
-#define malloc_index(x) x>2048 ? 7 : \
-                        x>1024 ? 6 : \
-                        x> 512 ? 5 : \
-                        x> 256 ? 4 : \
-                        x> 128 ? 3 : \
-                        x>  64 ? 2 : \
-                        x>  32 ? 1 : \
-                                 0
+#define malloc_index(x) x>524288 ? 16 : \
+                        x>262144 ? 15 : \
+                        x>131072 ? 14 : \
+                        x> 65536 ? 13 : \
+                        x> 32768 ? 12 : \
+                        x> 16384 ? 11 : \
+                        x>  8192 ? 10 : \
+                        x>  4096 ?  9 : \
+                        x>  2048 ?  8 : \
+                        x>  1024 ?  7 : \
+                        x>   512 ?  6 : \
+                        x>   256 ?  5 : \
+                        x>   128 ?  4 : \
+                        x>    64 ?  3 : \
+                        x>    32 ?  2 : \
+                        x>    16 ?  1 : \
+                                    0
 
-#define MAX_MALLOC_INDEX 8
+#define MALLOC_MAX_INDEX 16
 
 volatile unsigned long phystop = (KERNBASE + 0x8000000000ul);
 volatile unsigned long eom_marker = 0;
 void * kheap_start = 0;
 void * kheap_next = 0;
 void * kheap_last_used = 0;
-struct malloc_struct * kmalloc_next[MAX_MALLOC_INDEX];  // Next free space which can be allocated
+struct malloc_struct * kmalloc_next[MALLOC_MAX_INDEX+1];  // Next free space which can be allocated
 struct spinlock kheap_lock;
 struct spinlock kmalloc_lock;
 
@@ -162,7 +183,7 @@ void kheap_init() {
     kheap_start = (void *) phystop;
     kheap_next = (void *) phystop;
     kheap_last_used = kheap_start - 1;
-    for (int i=0; i<8; i++) kmalloc_next[i] = 0ul;
+    for (int i=0; i<MALLOC_MAX_INDEX+1; i++) kmalloc_next[i] = 0ul;
     printf("kheap initialized\n");
 }
 
@@ -189,26 +210,27 @@ void * kmalloc(unsigned long size) {
   if (size > MAX_KMALLOC) panic("kmalloc: attempted to allocate too much space");
   if (size == 0) panic("kmalloc: attempted to allocate too little space");
 
-  size = malloc_size(size + 16);
+  size = malloc_size(size);
   int index = malloc_index(size);
+  unsigned int size_all = size + 16;
 
   acquire(&kmalloc_lock);
   struct malloc_struct ** current = &kmalloc_next[index];
 
   while (1) {
     if (!*current) {
-      while (kheap_next - kheap_last_used < size) {
+      while (kheap_next - kheap_last_used < size_all) {
           kheap_grow();
       }
       struct malloc_struct * newstruct = kheap_last_used + 1;
-      kheap_last_used += PGSIZE;
-      newstruct->size = PGSIZE;
+      kheap_last_used += size_all;
+      newstruct->size = size_all;
       newstruct->next = 0;
 
       *current = newstruct;
     }
 
-    if ((*current)->size == size) {
+    if ((*current)->size == size_all) {
       // Exact size match! (or close enough)
       struct malloc_struct * ptr = *current;
       *current = ptr->next;
@@ -217,13 +239,13 @@ void * kmalloc(unsigned long size) {
       return &(ptr->data);
     }
 
-    if ((*current)->size > size) {
+    if ((*current)->size > size_all) {
       // Split it!
       struct malloc_struct * ptr = (*current);
-      *current = ((void *) ptr) + size;
-      (*current)->size = ptr->size - size;
+      *current = ((void *) ptr) + size_all;
+      (*current)->size = ptr->size - size_all;
       (*current)->next = ptr->next;
-      ptr->size = size;
+      ptr->size = size_all;
       ptr->next = KM_MAGIC;
       release(&kmalloc_lock);
       return &(ptr->data);
